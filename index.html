@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -92,8 +91,13 @@
       cursor: pointer;
     }
 
-    button:hover {
+    button:hover:not(:disabled) {
       background: #ffd34d;
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.7;
     }
 
     .table-wrap {
@@ -155,12 +159,24 @@
       text-transform: uppercase;
     }
 
-    .positive {
+    .positive,
+    .price-up {
       color: #16c784;
     }
 
-    .negative {
+    .negative,
+    .price-down {
       color: #ea3943;
+    }
+
+    .price-up strong,
+    .price-down strong {
+      animation: price-flash 1.2s ease-out;
+    }
+
+    @keyframes price-flash {
+      0% { background-color: currentColor; color: #080d18; }
+      100% { background-color: transparent; }
     }
 
     .message {
@@ -179,6 +195,14 @@
 
     .footer strong {
       color: #f0b90b;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
     }
 
     @media (max-width: 600px) {
@@ -206,10 +230,9 @@
 </head>
 
 <body>
-
   <header>
     <div class="logo">WORLD CORE</div>
-    <div class="status" id="connection">
+    <div class="status" id="connection" role="status" aria-live="polite">
       Connecting to market data...
     </div>
   </header>
@@ -230,7 +253,7 @@
       aria-label="Search cryptocurrencies"
     >
 
-    <button id="refreshBtn" onclick="loadMarket()">
+    <button id="refreshBtn" type="button">
       Refresh Market
     </button>
   </section>
@@ -246,12 +269,9 @@
           <th>24h Volume</th>
         </tr>
       </thead>
-
-      <tbody id="market">
+      <tbody id="market" aria-live="polite">
         <tr>
-          <td colspan="5" class="message">
-            Loading cryptocurrency market...
-          </td>
+          <td colspan="5" class="message">Loading cryptocurrency market...</td>
         </tr>
       </tbody>
     </table>
@@ -265,150 +285,172 @@
 
   <script>
     let allCoins = [];
+    let previousPrices = new Map();
+    let isLoading = false;
 
     const market = document.getElementById("market");
     const connection = document.getElementById("connection");
     const search = document.getElementById("search");
     const refreshBtn = document.getElementById("refreshBtn");
+    const updated = document.getElementById("updated");
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[character]);
+    }
 
     function money(value) {
-      if (value === null || value === undefined) {
+      if (value === null || value === undefined || !Number.isFinite(Number(value))) {
         return "N/A";
       }
 
+      const amount = Number(value);
       return new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "USD",
-        maximumFractionDigits: value < 1 ? 6 : 2
-      }).format(value);
+        maximumFractionDigits: amount < 1 ? 6 : 2
+      }).format(amount);
     }
 
     function compactMoney(value) {
-      if (value === null || value === undefined) {
+      if (value === null || value === undefined || !Number.isFinite(Number(value))) {
         return "N/A";
       }
 
       return "$" + new Intl.NumberFormat("en-US", {
         notation: "compact",
         maximumFractionDigits: 2
-      }).format(value);
+      }).format(Number(value));
     }
 
     function renderCoins(coins) {
       if (!coins.length) {
         market.innerHTML = `
           <tr>
-            <td colspan="5" class="message">
-              No matching cryptocurrencies found.
-            </td>
+            <td colspan="5" class="message">No matching cryptocurrencies found.</td>
           </tr>
         `;
         return;
       }
 
       market.innerHTML = coins.map(coin => {
-        const change = coin.price_change_percentage_24h;
-        const changeClass =
-          change >= 0 ? "positive" : "negative";
+        const change = Number(coin.price_change_percentage_24h);
+        const changeClass = Number.isFinite(change)
+          ? (change >= 0 ? "positive" : "negative")
+          : "";
+        const previousPrice = previousPrices.get(coin.id);
+        const currentPrice = Number(coin.current_price);
+        const movement = Number.isFinite(previousPrice) && Number.isFinite(currentPrice)
+          ? (currentPrice > previousPrice ? "up" : currentPrice < previousPrice ? "down" : "")
+          : "";
+        const safeImage = typeof coin.image === "string" && coin.image.startsWith("https://")
+          ? escapeHtml(coin.image)
+          : "";
+        const safeName = escapeHtml(coin.name || "Unknown asset");
+        const safeSymbol = escapeHtml(coin.symbol || "");
 
         return `
           <tr>
             <td>
               <div class="coin">
-                <img
-                  src="${coin.image}"
-                  alt="${coin.name}"
-                  loading="lazy"
-                >
+                ${safeImage ? `<img src="${safeImage}" alt="" loading="lazy">` : ""}
                 <div>
-                  <div class="coin-name">${coin.name}</div>
-                  <div class="symbol">${coin.symbol}</div>
+                  <div class="coin-name">${safeName}</div>
+                  <div class="symbol">${safeSymbol}</div>
                 </div>
               </div>
             </td>
-
-            <td><strong>${money(coin.current_price)}</strong></td>
-
-            <td class="${changeClass}">
-              ${change == null ? "N/A" : change.toFixed(2) + "%"}
+            <td class="price-${movement}">
+              <strong>${money(coin.current_price)}</strong>
+              ${movement ? `<span aria-label="Price moved ${movement}">${movement === "up" ? "▲" : "▼"}</span>` : ""}
             </td>
-
+            <td class="${changeClass}">
+              ${Number.isFinite(change) ? change.toFixed(2) + "%" : "N/A"}
+            </td>
             <td>${compactMoney(coin.market_cap)}</td>
-
             <td>${compactMoney(coin.total_volume)}</td>
           </tr>
         `;
       }).join("");
     }
 
-    async function loadMarket() {
-      refreshBtn.disabled = true;
-      refreshBtn.textContent = "Loading...";
-
-      connection.textContent = "Updating market data...";
-
-      try {
-        const response = await fetch("/api/market", {
-          method: "GET",
-          headers: {
-            accept: "application/json"
-          }
-        });
-
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-          throw new Error(
-            result.error || "Market API request failed"
-          );
-        }
-
-        allCoins = result.coins;
-        filterCoins();
-
-        connection.textContent = "● Market data connected";
-
-        document.getElementById("updated").textContent =
-          "Last updated: " +
-          new Date(result.last_updated).toLocaleString();
-
-      } catch (error) {
-        console.error(error);
-
-        connection.textContent = "Market connection error";
-
-        market.innerHTML = `
-          <tr>
-            <td colspan="5" class="message">
-              Unable to load market data.
-              Please check your API configuration and try again.
-            </td>
-          </tr>
-        `;
-
-      } finally {
-        refreshBtn.disabled = false;
-        refreshBtn.textContent = "Refresh Market";
-      }
-    }
-
     function filterCoins() {
       const query = search.value.toLowerCase().trim();
-
       const filtered = allCoins.filter(coin =>
-        coin.name.toLowerCase().includes(query) ||
-        coin.symbol.toLowerCase().includes(query)
+        String(coin.name || "").toLowerCase().includes(query) ||
+        String(coin.symbol || "").toLowerCase().includes(query)
       );
 
       renderCoins(filtered);
     }
 
+    async function loadMarket() {
+      if (isLoading) return;
+
+      isLoading = true;
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = "Loading...";
+      connection.textContent = "Updating market data...";
+
+      try {
+        const response = await fetch("/api/market", {
+          method: "GET",
+          headers: { accept: "application/json" }
+        });
+        const result = await response.json();
+
+        if (!response.ok || !result.success || !Array.isArray(result.coins)) {
+          throw new Error(result.error || "Market API request failed");
+        }
+
+        const validCoins = result.coins.filter(coin =>
+          coin && typeof coin.id === "string"
+        );
+        const nextPrices = new Map(
+          validCoins.map(coin => [coin.id, Number(coin.current_price)])
+        );
+
+        allCoins = validCoins;
+        filterCoins();
+        previousPrices = nextPrices;
+        connection.textContent = "● Market data connected";
+
+        const updatedAt = new Date(result.last_updated);
+        updated.textContent = "Last updated: " + (
+          Number.isNaN(updatedAt.getTime()) ? "just now" : updatedAt.toLocaleString()
+        );
+      } catch (error) {
+        console.error("Unable to load market data:", error);
+        connection.textContent = "Market connection error";
+        if (!allCoins.length) {
+          market.innerHTML = `
+            <tr>
+              <td colspan="5" class="message">
+                Unable to load market data. Please check your API configuration and try again.
+              </td>
+            </tr>
+          `;
+        }
+        updated.textContent = allCoins.length
+          ? "Refresh failed — showing previously loaded prices."
+          : "Market data could not be loaded.";
+      } finally {
+        isLoading = false;
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = "Refresh Market";
+      }
+    }
+
     search.addEventListener("input", filterCoins);
+    refreshBtn.addEventListener("click", loadMarket);
 
     loadMarket();
-
     setInterval(loadMarket, 60000);
   </script>
-
 </body>
 </html>
