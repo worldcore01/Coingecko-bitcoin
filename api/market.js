@@ -11,25 +11,29 @@ export default async function handler(req, res) {
 
   if (!apiKey) {
     return res.status(500).json({
-      error: "Missing CoinGecko API key"
+      error: "CoinGecko API key is not configured"
     });
   }
 
-  const url = new URL(
-    "https://api.coingecko.com/api/v3/coins/markets"
-  );
-
-  url.search = new URLSearchParams({
-    vs_currency: "usd",
-    ids: "bitcoin,ethereum,solana",
-    order: "market_cap_desc",
-    per_page: "100",
-    page: "1",
-    sparkline: "false",
-    price_change_percentage: "24h"
-  }).toString();
-
   try {
+    const url = new URL(
+      "https://api.coingecko.com/api/v3/coins/markets"
+    );
+
+    url.searchParams.set("vs_currency", "usd");
+    url.searchParams.set(
+      "ids",
+      "bitcoin,ethereum,solana"
+    );
+    url.searchParams.set("order", "market_cap_desc");
+    url.searchParams.set("per_page", "100");
+    url.searchParams.set("page", "1");
+    url.searchParams.set("sparkline", "false");
+    url.searchParams.set(
+      "price_change_percentage",
+      "24h"
+    );
+
     const response = await fetch(url, {
       headers: {
         accept: "application/json",
@@ -41,10 +45,8 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       return res.status(response.status).json({
-        error: "CoinGecko request failed",
-        details: data?.error ||
-          data?.status?.error_message ||
-          "API error"
+        error: "CoinGecko API request failed",
+        details: data
       });
     }
 
@@ -53,13 +55,16 @@ export default async function handler(req, res) {
       "s-maxage=60, stale-while-revalidate=120"
     );
 
-    return res.status(200).json(data);
+    return res.status(200).json({
+      success: true,
+      currency: "usd",
+      last_updated: new Date().toISOString(),
+      coins: data
+    });
 
   } catch (error) {
-    console.error(error);
-
-    return res.status(502).json({
-      error: "Unable to reach CoinGecko"
+    return res.status(500).json({
+      error: "Unable to retrieve market data"
     });
   }
 }

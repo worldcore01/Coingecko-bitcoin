@@ -1,95 +1,456 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WORLD CORE | Crypto Market</title>
-<script>
-  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-</script>
-<script defer src="/_vercel/insights/script.js"></script>
-<style>
-body {
-  background: #080d18;
-  color: white;
-  font-family: Arial, sans-serif;
-  padding: 25px;
-}
-h1 { color: #f0b90b; }
-.card {
-  background: #151e30;
-  padding: 18px;
-  margin: 14px 0;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-.card img { width: 42px; }
-.price { font-size: 21px; font-weight: bold; }
-.positive { color: #00d68f; }
-.negative { color: #ff5263; }
-small { color: #9aa8bd; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080d18">
+
+  <title>WORLD CORE | Crypto Market</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #080d18;
+      color: #f5f7fb;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 24px 7%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #202a3c;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #f0b90b;
+    }
+
+    .status {
+      color: #aab4c5;
+      font-size: 13px;
+    }
+
+    .hero {
+      padding: 55px 7% 35px;
+    }
+
+    .hero h1 {
+      font-size: clamp(30px, 5vw, 48px);
+      margin-bottom: 12px;
+    }
+
+    .hero h1 span {
+      color: #f0b90b;
+    }
+
+    .hero p {
+      color: #9ba8bc;
+      line-height: 1.6;
+    }
+
+    .toolbar {
+      padding: 0 7% 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    input {
+      background: #111b2b;
+      border: 1px solid #29374c;
+      color: white;
+      padding: 13px 16px;
+      border-radius: 9px;
+      outline: none;
+      width: min(100%, 320px);
+      font-size: 14px;
+    }
+
+    button {
+      background: #f0b90b;
+      border: none;
+      color: #111;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover:not(:disabled) {
+      background: #ffd34d;
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.7;
+    }
+
+    .table-wrap {
+      margin: 0 7% 40px;
+      background: #101827;
+      border: 1px solid #253147;
+      border-radius: 14px;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 720px;
+    }
+
+    th, td {
+      padding: 19px 17px;
+      text-align: left;
+      border-bottom: 1px solid #202c3f;
+      white-space: nowrap;
+    }
+
+    th {
+      color: #8998ae;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    td {
+      font-size: 14px;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .coin {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .coin img {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+    }
+
+    .coin-name {
+      font-weight: bold;
+    }
+
+    .symbol {
+      color: #8e9bb0;
+      font-size: 12px;
+      margin-top: 4px;
+      text-transform: uppercase;
+    }
+
+    .positive,
+    .price-up {
+      color: #16c784;
+    }
+
+    .negative,
+    .price-down {
+      color: #ea3943;
+    }
+
+    .price-up strong,
+    .price-down strong {
+      animation: price-flash 1.2s ease-out;
+    }
+
+    @keyframes price-flash {
+      0% { background-color: currentColor; color: #080d18; }
+      100% { background-color: transparent; }
+    }
+
+    .message {
+      padding: 30px;
+      text-align: center;
+      color: #9ba8bc;
+    }
+
+    .footer {
+      padding: 25px 7%;
+      color: #718096;
+      border-top: 1px solid #202a3c;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .footer strong {
+      color: #f0b90b;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    @media (max-width: 600px) {
+      header {
+        padding: 20px;
+      }
+
+      .hero {
+        padding: 40px 20px 25px;
+      }
+
+      .toolbar {
+        padding: 0 20px 20px;
+      }
+
+      .table-wrap {
+        margin: 0 20px 30px;
+      }
+
+      .footer {
+        padding: 20px;
+      }
+    }
+  </style>
 </head>
+
 <body>
+  <header>
+    <div class="logo">WORLD CORE</div>
+    <div class="status" id="connection" role="status" aria-live="polite">
+      Connecting to market data...
+    </div>
+  </header>
 
-<h1>WORLD CORE</h1>
-<h2>Crypto Market Dashboard</h2>
-<p id="status">Connecting to CoinGecko...</p>
+  <section class="hero">
+    <h1>Crypto <span>Market</span></h1>
+    <p>
+      Explore cryptocurrency prices, market capitalization
+      and trading activity with WORLD CORE.
+    </p>
+  </section>
 
-<div id="coins"></div>
+  <section class="toolbar">
+    <input
+      type="search"
+      id="search"
+      placeholder="Search Bitcoin, Ethereum, Solana..."
+      aria-label="Search cryptocurrencies"
+    >
 
-<script>
-async function loadMarkets() {
-  const status = document.getElementById("status");
+    <button id="refreshBtn" type="button">
+      Refresh Market
+    </button>
+  </section>
 
-  try {
-    const response = await fetch("/api/market");
+  <section class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Asset</th>
+          <th>Price</th>
+          <th>24h Change</th>
+          <th>Market Cap</th>
+          <th>24h Volume</th>
+        </tr>
+      </thead>
+      <tbody id="market" aria-live="polite">
+        <tr>
+          <td colspan="5" class="message">Loading cryptocurrency market...</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
 
-    if (!response.ok) throw new Error("API connection failed");
+  <footer class="footer">
+    <strong>WORLD CORE</strong> — Crypto Market Dashboard<br>
+    Market data provided by CoinGecko.
+    <div id="updated">Waiting for market data...</div>
+  </footer>
 
-    const coins = await response.json();
+  <script>
+    let allCoins = [];
+    let previousPrices = new Map();
+    let isLoading = false;
 
-    document.getElementById("coins").innerHTML =
-      coins.map(coin => `
-        <div class="card">
-          <img src="${coin.image}" alt="">
-          <div>
-            <strong>${coin.name} (${coin.symbol.toUpperCase()})</strong>
-            <div class="price">
-              $${Number(coin.current_price).toLocaleString(
-                "en-US",
-                { maximumFractionDigits: 4 }
-              )}
-            </div>
-            <small>Market Cap: $${Number(
-              coin.market_cap
-            ).toLocaleString("en-US")}</small>
-            <br>
-            <span class="${
-              coin.price_change_percentage_24h >= 0
-                ? "positive" : "negative"
-            }">
-              24h: ${
-                Number(coin.price_change_percentage_24h || 0).toFixed(2)
-              }%
-            </span>
-          </div>
-        </div>
-      `).join("");
+    const market = document.getElementById("market");
+    const connection = document.getElementById("connection");
+    const search = document.getElementById("search");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const updated = document.getElementById("updated");
 
-    status.textContent = "Market data connected successfully";
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[character]);
+    }
 
-  } catch (error) {
-    status.textContent = error.message;
-  }
-}
+    function money(value) {
+      if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+        return "N/A";
+      }
 
-loadMarkets();
-setInterval(loadMarkets, 60000);
-</script>
+      const amount = Number(value);
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: amount < 1 ? 6 : 2
+      }).format(amount);
+    }
 
+    function compactMoney(value) {
+      if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+        return "N/A";
+      }
+
+      return "$" + new Intl.NumberFormat("en-US", {
+        notation: "compact",
+        maximumFractionDigits: 2
+      }).format(Number(value));
+    }
+
+    function renderCoins(coins) {
+      if (!coins.length) {
+        market.innerHTML = `
+          <tr>
+            <td colspan="5" class="message">No matching cryptocurrencies found.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      market.innerHTML = coins.map(coin => {
+        const change = Number(coin.price_change_percentage_24h);
+        const changeClass = Number.isFinite(change)
+          ? (change >= 0 ? "positive" : "negative")
+          : "";
+        const previousPrice = previousPrices.get(coin.id);
+        const currentPrice = Number(coin.current_price);
+        const movement = Number.isFinite(previousPrice) && Number.isFinite(currentPrice)
+          ? (currentPrice > previousPrice ? "up" : currentPrice < previousPrice ? "down" : "")
+          : "";
+        const safeImage = typeof coin.image === "string" && coin.image.startsWith("https://")
+          ? escapeHtml(coin.image)
+          : "";
+        const safeName = escapeHtml(coin.name || "Unknown asset");
+        const safeSymbol = escapeHtml(coin.symbol || "");
+
+        return `
+          <tr>
+            <td>
+              <div class="coin">
+                ${safeImage ? `<img src="${safeImage}" alt="" loading="lazy">` : ""}
+                <div>
+                  <div class="coin-name">${safeName}</div>
+                  <div class="symbol">${safeSymbol}</div>
+                </div>
+              </div>
+            </td>
+            <td class="price-${movement}">
+              <strong>${money(coin.current_price)}</strong>
+              ${movement ? `<span aria-label="Price moved ${movement}">${movement === "up" ? "▲" : "▼"}</span>` : ""}
+            </td>
+            <td class="${changeClass}">
+              ${Number.isFinite(change) ? change.toFixed(2) + "%" : "N/A"}
+            </td>
+            <td>${compactMoney(coin.market_cap)}</td>
+            <td>${compactMoney(coin.total_volume)}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function filterCoins() {
+      const query = search.value.toLowerCase().trim();
+      const filtered = allCoins.filter(coin =>
+        String(coin.name || "").toLowerCase().includes(query) ||
+        String(coin.symbol || "").toLowerCase().includes(query)
+      );
+
+      renderCoins(filtered);
+    }
+
+    async function loadMarket() {
+      if (isLoading) return;
+
+      isLoading = true;
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = "Loading...";
+      connection.textContent = "Updating market data...";
+
+      try {
+        const response = await fetch("/api/market", {
+          method: "GET",
+          headers: { accept: "application/json" }
+        });
+        const result = await response.json();
+
+        if (!response.ok || !result.success || !Array.isArray(result.coins)) {
+          throw new Error(result.error || "Market API request failed");
+        }
+
+        const validCoins = result.coins.filter(coin =>
+          coin && typeof coin.id === "string"
+        );
+        const nextPrices = new Map(
+          validCoins.map(coin => [coin.id, Number(coin.current_price)])
+        );
+
+        allCoins = validCoins;
+        filterCoins();
+        previousPrices = nextPrices;
+        connection.textContent = "● Market data connected";
+
+        const updatedAt = new Date(result.last_updated);
+        updated.textContent = "Last updated: " + (
+          Number.isNaN(updatedAt.getTime()) ? "just now" : updatedAt.toLocaleString()
+        );
+      } catch (error) {
+        console.error("Unable to load market data:", error);
+        connection.textContent = "Market connection error";
+        if (!allCoins.length) {
+          market.innerHTML = `
+            <tr>
+              <td colspan="5" class="message">
+                Unable to load market data. Please check your API configuration and try again.
+              </td>
+            </tr>
+          `;
+        }
+        updated.textContent = allCoins.length
+          ? "Refresh failed — showing previously loaded prices."
+          : "Market data could not be loaded.";
+      } finally {
+        isLoading = false;
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = "Refresh Market";
+      }
+    }
+
+    search.addEventListener("input", filterCoins);
+    refreshBtn.addEventListener("click", loadMarket);
+
+    loadMarket();
+    setInterval(loadMarket, 60000);
+  </script>
 </body>
 </html>
