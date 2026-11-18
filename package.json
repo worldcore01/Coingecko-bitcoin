@@ -1,0 +1,14 @@
+{
+  "name": "coingecko-bitcoin",
+  "version": "1.0.0",
+  "description": "Crypto Market Dashboard",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step required for static HTML'",
+    "lint": "echo 'No linter configured'"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^1.1.1"
+  }
+}
