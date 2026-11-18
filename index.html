@@ -42,7 +42,7 @@ async function loadMarkets() {
   const status = document.getElementById("status");
 
   try {
-    const response = await fetch("/api/markets");
+    const response = await fetch("/api/market");
 
     if (!response.ok) throw new Error("API connection failed");
 
