@@ -1,0 +1,91 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WORLD CORE | Crypto Market</title>
+<style>
+body {
+  background: #080d18;
+  color: white;
+  font-family: Arial, sans-serif;
+  padding: 25px;
+}
+h1 { color: #f0b90b; }
+.card {
+  background: #151e30;
+  padding: 18px;
+  margin: 14px 0;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.card img { width: 42px; }
+.price { font-size: 21px; font-weight: bold; }
+.positive { color: #00d68f; }
+.negative { color: #ff5263; }
+small { color: #9aa8bd; }
+</style>
+</head>
+<body>
+
+<h1>WORLD CORE</h1>
+<h2>Crypto Market Dashboard</h2>
+<p id="status">Connecting to CoinGecko...</p>
+
+<div id="coins"></div>
+
+<script>
+async function loadMarkets() {
+  const status = document.getElementById("status");
+
+  try {
+    const response = await fetch("/api/markets");
+
+    if (!response.ok) throw new Error("API connection failed");
+
+    const coins = await response.json();
+
+    document.getElementById("coins").innerHTML =
+      coins.map(coin => `
+        <div class="card">
+          <img src="${coin.image}" alt="">
+          <div>
+            <strong>${coin.name} (${coin.symbol.toUpperCase()})</strong>
+            <div class="price">
+              $${Number(coin.current_price).toLocaleString(
+                "en-US",
+                { maximumFractionDigits: 4 }
+              )}
+            </div>
+            <small>Market Cap: $${Number(
+              coin.market_cap
+            ).toLocaleString("en-US")}</small>
+            <br>
+            <span class="${
+              coin.price_change_percentage_24h >= 0
+                ? "positive" : "negative"
+            }">
+              24h: ${
+                Number(coin.price_change_percentage_24h || 0).toFixed(2)
+              }%
+            </span>
+          </div>
+        </div>
+      `).join("");
+
+    status.textContent = "Market data connected successfully";
+
+  } catch (error) {
+    status.textContent = error.message;
+  }
+}
+
+loadMarkets();
+setInterval(loadMarkets, 60000);
+</script>
+
+</body>
+</html>
